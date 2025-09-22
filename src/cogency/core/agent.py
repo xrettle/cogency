@@ -42,11 +42,12 @@ class Agent:
 
             set_debug(True)
 
-        # Handle sandbox parameter for backward compatibility
-        sandbox = kwargs.pop("sandbox", None)
-        if sandbox is not None:
-            from .config import Security
-            kwargs["security"] = Security(sandbox=sandbox)
+        # Handle access parameter
+        access = kwargs.pop("access", None)
+        if access is not None:
+            from .config import Access, Security
+
+            kwargs["security"] = Security(access=Access(access))
 
         # Set the tools for the agent's configuration.
         if tools is None:

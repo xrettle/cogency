@@ -1,5 +1,6 @@
 """File writing with sandbox/system mode support."""
 
+from ...core.config import Access
 from ...core.protocols import Tool, ToolResult
 from ..security import resolve_file, safe_execute
 
@@ -16,11 +17,13 @@ class FileWrite(Tool):
         return f"Creating {args.get('file', 'file')}"
 
     @safe_execute
-    async def execute(self, file: str, content: str, sandbox: bool = True, **kwargs) -> ToolResult:
+    async def execute(
+        self, file: str, content: str, access: Access = Access.SANDBOX, **kwargs
+    ) -> ToolResult:
         if not file:
             return ToolResult(outcome="File cannot be empty")
 
-        file_path = resolve_file(file, sandbox)
+        file_path = resolve_file(file, access)
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)

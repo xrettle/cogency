@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from cogency.tools.security import sanitize_shell_input, timeout_context, validate_path
+from cogency.core.config import Access
+from cogency.tools.security import (
+    resolve_file,
+    sanitize_shell_input,
+    timeout_context,
+    validate_path,
+)
 
 # Comprehensive attack vectors for systematic security coverage
 SHELL_INJECTION_ATTACKS = [
@@ -196,3 +202,43 @@ def test_shell_input_sanitization():
     for cmd in safe_commands:
         result = sanitize_shell_input(cmd)
         assert result == cmd
+
+
+def test_resolve_file_access_levels():
+    """Test resolve_file with three access levels."""
+    import tempfile
+
+    # SANDBOX access - restricts to sandbox directory
+    with pytest.raises(ValueError, match="Invalid path"):
+        resolve_file("/etc/passwd", Access.SANDBOX)
+
+    with pytest.raises(ValueError, match="Invalid path"):
+        resolve_file("../../../etc/passwd", Access.SANDBOX)
+
+    # Should work for relative paths in sandbox
+    result = resolve_file("test.txt", Access.SANDBOX)
+    assert isinstance(result, Path)
+    assert ".cogency/sandbox" in str(result)
+
+    # PROJECT access - restricts to project directory
+    with pytest.raises(ValueError, match="Invalid path"):
+        resolve_file("/etc/passwd", Access.PROJECT)
+
+    with pytest.raises(ValueError, match="Invalid path"):
+        resolve_file("../../../etc/passwd", Access.PROJECT)
+
+    # Should work for relative paths in project
+    result = resolve_file("test.txt", Access.PROJECT)
+    assert isinstance(result, Path)
+
+    # SYSTEM access - blocks dangerous paths but allows absolute paths
+    with pytest.raises(ValueError, match="Invalid path"):
+        resolve_file("/etc/passwd", Access.SYSTEM)
+
+    with pytest.raises(ValueError, match="Invalid path"):
+        resolve_file("../../../etc/passwd", Access.SYSTEM)
+
+    # Should work for safe absolute paths
+    with tempfile.NamedTemporaryFile() as tmp:
+        result = resolve_file(tmp.name, Access.SYSTEM)
+        assert isinstance(result, Path)

@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from ...core.config import Access
 from ...core.protocols import Tool, ToolResult
 from ..security import resolve_file, safe_execute
 
@@ -23,12 +24,12 @@ class FileRead(Tool):
 
     @safe_execute
     async def execute(
-        self, file: str, start: int = 0, lines: int = 100, sandbox: bool = True, **kwargs
+        self, file: str, start: int = 0, lines: int = 100, access: Access = Access.SANDBOX, **kwargs
     ) -> ToolResult:
         if not file:
             return ToolResult(outcome="File cannot be empty")
 
-        file_path = resolve_file(file, sandbox)
+        file_path = resolve_file(file, access)
 
         try:
             if start > 0 or lines != 100:

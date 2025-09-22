@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from cogency.core.config import Access
 from cogency.core.executor import execute
 from cogency.core.protocols import ToolCall, ToolResult
 
@@ -60,5 +61,5 @@ async def test_context_injection(mock_config):
     await execute(call, mock_config, "test_user", "test_conv")
 
     mock_tool.execute.assert_called_once_with(
-        explicit_arg="value", sandbox=True, user_id="test_user"
+        explicit_arg="value", access=Access.SANDBOX, user_id="test_user"
     )

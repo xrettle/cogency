@@ -3,6 +3,7 @@
 import re
 from pathlib import Path
 
+from ...core.config import Access
 from ...core.protocols import Tool, ToolResult
 from ..security import resolve_file, safe_execute
 
@@ -25,7 +26,12 @@ class FileSearch(Tool):
 
     @safe_execute
     async def execute(
-        self, pattern: str = None, content: str = None, path: str = ".", **kwargs
+        self,
+        pattern: str = None,
+        content: str = None,
+        path: str = ".",
+        access: Access = Access.SANDBOX,
+        **kwargs,
     ) -> ToolResult:
         """Search files with visual results."""
         if not pattern and not content:
@@ -35,9 +41,13 @@ class FileSearch(Tool):
         if path == ".":
             from ...lib.paths import Paths
 
-            search_path = Paths.sandbox()
+            search_path = (
+                Paths.sandbox()
+                if access == Access.SANDBOX
+                else (Path.cwd() if access == Access.PROJECT else Path("."))
+            )
         else:
-            search_path = resolve_file(path, sandbox=True)
+            search_path = resolve_file(path, access)
 
         if not search_path.exists():
             return ToolResult(outcome=f"Directory '{path}' does not exist")

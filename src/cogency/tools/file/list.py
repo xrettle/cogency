@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from ...core.config import Access
 from ...core.protocols import Tool, ToolResult
 from ..security import resolve_file, safe_execute
 
@@ -18,7 +19,9 @@ class FileList(Tool):
         return f"Listing {args.get('path', '.')}"
 
     @safe_execute
-    async def execute(self, path: str = ".", pattern: str = None, **kwargs) -> ToolResult:
+    async def execute(
+        self, path: str = ".", pattern: str = None, access: Access = Access.SANDBOX, **kwargs
+    ) -> ToolResult:
         """List files in clean tree format."""
         if pattern is None:
             pattern = "*"
@@ -27,9 +30,13 @@ class FileList(Tool):
         if path == ".":
             from ...lib.paths import Paths
 
-            target = Paths.sandbox()
+            target = (
+                Paths.sandbox()
+                if access == Access.SANDBOX
+                else (Path.cwd() if access == Access.PROJECT else Path("."))
+            )
         else:
-            target = resolve_file(path, sandbox=True)
+            target = resolve_file(path, access)
 
         if not target.exists():
             return ToolResult(outcome=f"Directory '{path}' does not exist")

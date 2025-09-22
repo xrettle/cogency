@@ -1,5 +1,6 @@
 """File editing with exact string replacement and duplicate detection."""
 
+from ...core.config import Access
 from ...core.protocols import Tool, ToolResult
 from ..security import resolve_file, safe_execute
 
@@ -17,7 +18,7 @@ class FileEdit(Tool):
 
     @safe_execute
     async def execute(
-        self, file: str, old: str, new: str, sandbox: bool = True, **kwargs
+        self, file: str, old: str, new: str, access: Access = Access.SANDBOX, **kwargs
     ) -> ToolResult:
         if not file:
             return ToolResult(outcome="File cannot be empty")
@@ -25,7 +26,7 @@ class FileEdit(Tool):
         if not old:
             return ToolResult(outcome="Old text cannot be empty")
 
-        file_path = resolve_file(file, sandbox)
+        file_path = resolve_file(file, access)
 
         if not file_path.exists():
             return ToolResult(outcome=f"File '{file}' does not exist")
